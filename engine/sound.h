@@ -2,7 +2,7 @@
 #define SOUND_H
 
 #include "common.h"
-#include <SDL/SDL_mixer.h>
+#include <SDL_mixer.h>
 
 #define TOTAL_SOUNDS	64
 #define	MAX_CHANNELS	16
@@ -18,5 +18,6 @@ int sndIsPlaying(int channel);
 int	sndStop(int channel);
 int sndInit();
 int sndClose();
+int musPlay(const char *music_filename);
 
 #endif

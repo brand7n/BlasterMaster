@@ -23,7 +23,9 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#ifndef __APPLE__
 #include <mntent.h>
+#endif
 #include <dlfcn.h>
 #endif
 
@@ -53,7 +55,11 @@ dllfunctions *GetGameAPI (const char *tempname, hostfunctions *thost, void **gam
 #ifdef WIN32
 	strcat(gamename, ".dll");
 #else
+#ifdef __APPLE__
+	strcat(gamename, ".dylib");
+#else
 	strcat(gamename, ".so");
+#endif
 #endif
 
 #ifndef WIN32

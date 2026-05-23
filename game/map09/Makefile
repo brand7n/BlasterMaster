@@ -1,22 +1,19 @@
-# DLL makefile
-CPP  = g++.exe
-CC   = gcc.exe
-DLLWRAP=dllwrap.exe
+# Dylib makefile
+CPP  = g++
+CC   = gcc
 
-INCS = -I"../../common" -I"../common_dungeon"
+INCS = -I"../../common" -I"../common_dungeon" $(shell sdl2-config --cflags)
 
 OBJ  = bm_game.o interface.o
-BIN  = "../map09.dll"
-DEFFILE=../libmap09.def
-STATICLIB=../libmap09.a
+BIN  = "../map09.dylib"
 
-LIBS = -mwindows -lopengl32
-CFLAGS = $(INCS) -g
+LIBS = -framework OpenGL
+CFLAGS = $(INCS) -g -fPIC
 
 .PHONY:	clean deps
 
 $(BIN):	deps $(OBJ)
-	$(DLLWRAP) --output-def $(DEFFILE) --implib $(STATICLIB) $(OBJ) $(LIBS) -o $(BIN)
+	$(CC) -dynamiclib $(OBJ) $(LIBS) -o $(BIN)
 
 clean:
 	rm -f $(OBJ)

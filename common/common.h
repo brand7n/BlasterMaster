@@ -20,8 +20,8 @@
 #endif
 
 #include <stdlib.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 
 #ifndef COMMON_H
 #define COMMON_H

@@ -13,7 +13,7 @@ void RingFlyer_PreThink(entity e);
 void RingFlyer_Touched(entity e, entity o);
 void RingFlyer_Draw(entity e);
 void RingFlyer_Init(entity e);
-void RingFlyer_Preview(int x, int y);
+void RingFlyer_Preview(int x, int y, class_type class);
 void RingFlyer_Death(entity e);
 int RingFlyer_Attacked(entity e, entity o, long damage);
 

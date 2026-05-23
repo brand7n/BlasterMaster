@@ -137,7 +137,7 @@ void RingFlyer_Draw(entity e) {
 	}
 };
 
-void RingFlyer_Preview(int nx, int ny) {
+void RingFlyer_Preview(int nx, int ny, class_type class) {
 	host->put_sprite      (nx    , ny    , 1, 0x6C);
 	host->put_sprite      (nx + 8, ny    , 1, 0x6D);
 	host->put_sprite_vflip(nx    , ny + 8, 1, 0x6C);

@@ -17,7 +17,8 @@
 #endif
 
 #include <stdlib.h>
-#include <SDL/SDL.h>
+#include <sys/stat.h>
+#include <SDL.h>
 #include <png.h>
 #include "common.h"
 #include "newmap.h"
@@ -164,7 +165,7 @@ int LoadROM(char *fname) {
 	FILE	*palfile;
 	int i;
 	unsigned char	r, g, b, dummy;
-	unsigned long	sig;
+	Uint32	sig;
 
 	nesrom = fopen(fname, "rb");
 	if (nesrom == NULL) {
@@ -867,7 +868,7 @@ int SDL_SavePNG(SDL_Surface *texture, const char *filename) {
 	info_ptr = png_create_info_struct(png_ptr);
 	if (info_ptr == NULL) {
 		fclose(fp);
-		png_destroy_write_struct(&png_ptr,  png_infopp_NULL);
+		png_destroy_write_struct(&png_ptr,  NULL);
 		return -1;
 	}
 
@@ -920,10 +921,8 @@ void SaveTextures() {
 	int		i, j, k, l, n, cm;
 	unsigned short	m, totalsprites;
 
-	mkdir("textures");
-	chmod("textures", 0755);
-	mkdir("maps");
-	chmod("maps", 0755);
+	mkdir("textures", 0755);
+	mkdir("maps", 0755);
 
 	// Palette lookup for sprites:  (I should read these from the ROM instead
 	// but I'll have to find them first.... dammit)
@@ -955,7 +954,7 @@ void SaveTextures() {
 	texture = SDL_CreateRGBSurface(SDL_SWSURFACE, 256, 256, 32,
 								   rmask, gmask, bmask, amask);
 	// Ignore the alpha channel, it screws up the colorkey and distorts colors slightly
-	SDL_SetAlpha(texture, 0, 0);
+	SDL_SetSurfaceAlphaMod(texture, 0);
 
 	if(texture == NULL) {
 		fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());

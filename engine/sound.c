@@ -72,7 +72,7 @@ int	sndFree(int sound) {
 
 int	sndPlay(int sound, int channel, int loops) {
 	if (!sound_available) return 0;
-	if (precached_sounds[sound] == NULL) return;
+	if (precached_sounds[sound] == NULL) return 0;
 	if (channel >= MAX_CHANNELS) return 0;
 	if (channel < 0) return 0;
 	return Mix_PlayChannel(channel, precached_sounds[sound]->sound, loops);

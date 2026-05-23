@@ -7,7 +7,8 @@
 GLuint		fgsprites[16];
 GLuint		bgsprites[16];
 
-SDL_Surface	*sdlscreen;
+SDL_Window	*sdlwindow;
+SDL_GLContext	glcontext;
 Uint32		curticks;
 int			fullscreen, level_loaded;
 double		accel_scale;
@@ -250,7 +251,7 @@ void InitGL(int Width, int Height) {
 
 void sys_init(int argc, char **argv) {
 	int i, w, h;
-	unsigned long sdlflags;
+	Uint32 sdlflags;
 
 	/* Initialize SDL for video output */
 	if ( SDL_Init(SDL_INIT_VIDEO) < 0 ) {
@@ -265,23 +266,29 @@ void sys_init(int argc, char **argv) {
 	screen_w = 512; screen_h = 448;
 
 	// Scan program arguments:
-	sdlflags = SDL_OPENGL;
+	sdlflags = SDL_WINDOW_OPENGL;
 	for (i=1; i<argc; ++i) {
-		if (strcmp(argv[i], "-fs") == 0) sdlflags |= SDL_FULLSCREEN;
+		if (strcmp(argv[i], "-fs") == 0) sdlflags |= SDL_WINDOW_FULLSCREEN;
 		if (strcmp(argv[i], "-w") == 0) screen_w = atoi(argv[i+1]);
 		if (strcmp(argv[i], "-h") == 0) screen_h = atoi(argv[i+1]);
 	}
 
-	/* Create an OpenGL full-screen context */
-	sdlscreen = SDL_SetVideoMode(screen_w, screen_h, 24, sdlflags);
-	if ( sdlscreen == NULL ) {
-		fprintf(stderr, "Unable to create OpenGL screen: %s\n", SDL_GetError());
+	/* Create an OpenGL window */
+	sdlwindow = SDL_CreateWindow("Blaster Master",
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		screen_w, screen_h, sdlflags);
+	if ( sdlwindow == NULL ) {
+		fprintf(stderr, "Unable to create OpenGL window: %s\n", SDL_GetError());
 		SDL_Quit();
 		exit(2);
 	}
 
-	// Set the title bar in environments that support it:
-	SDL_WM_SetCaption("Blaster Master", NULL);
+	glcontext = SDL_GL_CreateContext(sdlwindow);
+	if ( glcontext == NULL ) {
+		fprintf(stderr, "Unable to create OpenGL context: %s\n", SDL_GetError());
+		SDL_Quit();
+		exit(2);
+	}
 
 	// Initialize OpenGL:
 	InitGL(screen_w, screen_h);
@@ -298,7 +305,7 @@ void sys_init(int argc, char **argv) {
 		for( i=0; i < SDL_NumJoysticks(); i++ )
 		{
 			SDL_Joystick	*curjoy = SDL_JoystickOpen(i);
-			printf("	%s (%d buttons, %d axes, %d hats, %d balls)\n", SDL_JoystickName(i),
+			printf("	%s (%d buttons, %d axes, %d hats, %d balls)\n", SDL_JoystickNameForIndex(i),
 				SDL_JoystickNumButtons(curjoy), SDL_JoystickNumAxes(curjoy),
 				SDL_JoystickNumHats(curjoy), SDL_JoystickNumBalls(curjoy));
 		}
@@ -309,7 +316,7 @@ void sys_init(int argc, char **argv) {
 		fgsprites[i] = bgsprites[i] = 0;
 
 	// Don't show the mouse cursor in full screen:
-	if (sdlflags & SDL_FULLSCREEN)
+	if (sdlflags & SDL_WINDOW_FULLSCREEN)
 		SDL_ShowCursor(0);
 
 	curticks = 0;
@@ -318,36 +325,28 @@ void sys_init(int argc, char **argv) {
 void sys_close() {
 	if (level_loaded) FreeTextures();
 
-	SDL_WM_GrabInput(SDL_GRAB_OFF);
+	SDL_SetWindowGrab(sdlwindow, SDL_FALSE);
 	SDL_ShowCursor(1);
 
 	SDL_JoystickEventState(SDL_DISABLE);
 
+	SDL_GL_DeleteContext(glcontext);
+	SDL_DestroyWindow(sdlwindow);
 	SDL_Quit();
 }
 
 void sys_togglefullscreen() {
-	// Kinda buggy still:
-/*	unsigned long sdlflags;
-
+	int w, h;
 	fullscreen = !fullscreen;
-
-	sdlflags = SDL_OPENGL;
-	if (fullscreen) sdlflags |= SDL_FULLSCREEN;
-
-	SDL_FreeSurface(sdlscreen);
-
-	// Create an OpenGL full-screen context
-	sdlscreen = SDL_SetVideoMode(640, 480, 24, sdlflags);
-	if ( sdlscreen == NULL ) {
-		fprintf(stderr, "Unable to create OpenGL screen: %s\n", SDL_GetError());
-		SDL_Quit();
-		exit(2);
-	}
-
-	InitGL(640, 480);
-	InitTextures();
-*/
+	SDL_SetWindowFullscreen(sdlwindow, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+	SDL_GL_GetDrawableSize(sdlwindow, &w, &h);
+	// Scale viewport to fill screen but keep game's logical resolution
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, (int)screen_w, (int)screen_h, 0);
+	glMatrixMode(GL_MODELVIEW);
+	SDL_RaiseWindow(sdlwindow);
 };
 
 void sys_clearscreen() {
@@ -366,7 +365,7 @@ void sys_updatescreen() {
 
 	time_dt = 1;
 
-	SDL_GL_SwapBuffers();
+	SDL_GL_SwapWindow(sdlwindow);
 
 #if 0
 	numframes++;
@@ -398,9 +397,10 @@ void sys_eventloop(Uint8 *control_keys) {
 				case SDLK_z:		*control_keys |= BUT_JUMP; break;
 				case SDLK_a:		*control_keys |= BUT_SWITCH; break;
 				case SDLK_RETURN:
-					if ( event.key.keysym.mod & KMOD_ALT )
+					if ( event.key.keysym.mod & KMOD_ALT ) {
 						sys_togglefullscreen();
-					else
+						*control_keys = 0;
+					} else
 						*control_keys |= BUT_PAUSE;
 					break;
 				case SDLK_F1:		LoadLevel("maps/map00.bma"); break;

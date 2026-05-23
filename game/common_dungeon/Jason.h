@@ -20,6 +20,7 @@ void Jason_Touched(entity e, entity o);
 void Jason_Draw(entity e);
 void Jason_Preview(int x, int y, class_type class);
 void Jason_Init(entity e);
+void Jason_Indoor(entity e);
 void Jason_Outdoor(entity e);
 
 extern class_properties_t	ClassProperties_Jason;

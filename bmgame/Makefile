@@ -1,22 +1,19 @@
-# DLL makefile
-CPP  = g++.exe
-CC   = gcc.exe
-DLLWRAP=dllwrap.exe
+# Dylib makefile
+CPP  = g++
+CC   = gcc
 
-INCS = -I"../common"
+INCS = -I"../common" $(shell sdl2-config --cflags)
 
 OBJ  = interface.o
-BIN  = "../BMGame.dll"
-DEFFILE=../libBMGame.def
-STATICLIB=../libBMGame.a
+BIN  = "../BMGame.dylib"
 
-LIBS = -mwindows -lmingw32 -lopengl32
-CFLAGS = $(INCS) -g
+LIBS = -framework OpenGL
+CFLAGS = $(INCS) -g -fPIC
 
 .PHONY:	clean deps
 
 $(BIN):	deps $(OBJ)
-	$(DLLWRAP) --output-def $(DEFFILE) --implib $(STATICLIB) $(OBJ) $(LIBS) -o $(BIN)
+	$(CC) -dynamiclib $(OBJ) $(LIBS) -o $(BIN)
 
 clean:
 	rm -f $(OBJ)

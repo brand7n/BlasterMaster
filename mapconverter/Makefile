@@ -1,13 +1,13 @@
-CPP  = g++.exe
-CC   = gcc.exe
+CPP  = g++
+CC   = gcc
 
-INCS = -I"../common"
+INCS = -I"../common" $(shell sdl2-config --cflags) $(shell pkg-config --cflags libpng)
 
 OBJ  = tilepager.o ../common/newmap.o
-BIN  = "../Map Extractor.exe"
+BIN  = "../Map Extractor"
 
-LIBS = -mwindows -lmingw32 -lSDLmain -lSDL -lpng -lz
-CFLAGS = $(INCS) -Dmain=SDL_main -g
+LIBS = $(shell sdl2-config --libs) $(shell pkg-config --libs libpng) -lz -framework OpenGL
+CFLAGS = $(INCS) -g -DGL_SILENCE_DEPRECATION
 
 .PHONY:	clean deps
 

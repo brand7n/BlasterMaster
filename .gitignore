@@ -1,0 +1,23 @@
+# Build artifacts
+*.o
+*.dylib
+*.dll
+*.exe
+*.a
+*.def
+dependencies
+
+# Built binaries
+Blaster Master
+Map Extractor
+
+# Generated game data
+maps/
+textures/
+sound/
+
+# ROM files
+*.nes
+
+# IDE files
+*.layout

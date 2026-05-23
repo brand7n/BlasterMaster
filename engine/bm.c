@@ -5,6 +5,10 @@
 #include "newmap.h"
 #include "bm_game.h"
 
+// Forward declarations
+int LoadGameDLL(const char *gamename);
+int LoadClientDLL(const char *gamename);
+
 typedef struct cache_entry_t {
 	char		*filename;			// The map filename associated with these entities.
 	entity_t	**state;			// The list of entities.

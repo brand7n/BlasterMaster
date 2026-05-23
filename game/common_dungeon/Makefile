@@ -1,22 +1,19 @@
-# DLL makefile
-CPP  = g++.exe
-CC   = gcc.exe
-DLLWRAP=dllwrap.exe
+# Dylib makefile
+CPP  = g++
+CC   = gcc
 
-INCS = -I"../../common"
+INCS = -I"../../common" $(shell sdl2-config --cflags)
 
 OBJ  = Bullet.o Explosion.o interface.o Jason.o PowerUp.o RingFlyer.o RingSpawner.o World.o
-BIN  = "../common_dungeon.dll"
-DEFFILE=../libcommon_dungeon.def
-STATICLIB=../libcommon_dungeon.a
+BIN  = "../common_dungeon.dylib"
 
-LIBS = -mwindows -lopengl32
-CFLAGS = $(INCS) -g
+LIBS = -framework OpenGL
+CFLAGS = $(INCS) -g -fPIC
 
 .PHONY:	clean deps
 
 $(BIN):	deps $(OBJ)
-	$(DLLWRAP) --output-def $(DEFFILE) --implib $(STATICLIB) $(OBJ) $(LIBS) -o $(BIN)
+	$(CC) -dynamiclib $(OBJ) $(LIBS) -o $(BIN)
 
 clean:
 	rm -f $(OBJ)
