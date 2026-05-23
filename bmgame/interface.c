@@ -6,10 +6,17 @@
 #include "entflags.h"
 #include "bm_game.h"
 
+#ifdef __EMSCRIPTEN__
+static hostfunctions		*host_bmgame = NULL;
+static dllfunctions		*game_bmgame = NULL;
+#define host host_bmgame
+#define game game_bmgame
+#else
 hostfunctions		*host = NULL;
 dllfunctions		*game = NULL;
+#endif
 
-void init() {
+static void bm_init() {
 	int	i, reg;
 	int	lx, rx, ty, by;
 
@@ -54,6 +61,8 @@ void init() {
 
 #ifdef WIN32
 __declspec(dllexport) dllfunctions *DLLInitialize(hostfunctions *thost) {
+#elif defined(__EMSCRIPTEN__)
+dllfunctions *DLLInitialize_bmgame(hostfunctions *thost) {
 #else
 dllfunctions *DLLInitialize(hostfunctions *thost) {
 #endif
@@ -143,7 +152,7 @@ dllfunctions *DLLInitialize(hostfunctions *thost) {
 
 	// Return our copy:
 	game = (dllfunctions *)calloc(sizeof(dllfunctions), 1);
-    game->init = init;
+    game->init = bm_init;
 
 	return game;
 };

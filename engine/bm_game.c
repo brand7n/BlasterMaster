@@ -31,6 +31,44 @@
 
 #include "bm_game.h"
 
+#ifdef __EMSCRIPTEN__
+
+// Static linking for Emscripten — no dlopen/dlsym
+extern dllfunctions *DLLInitialize_bmgame(hostfunctions *thost);
+extern dllfunctions *DLLInitialize_common(hostfunctions *thost);
+
+static struct { const char *name; dllfunctions *(*func)(hostfunctions *); } dll_table[] = {
+	{"bmgame",              DLLInitialize_bmgame},
+	{"game/common",         DLLInitialize_common},
+	{"game/map00",          DLLInitialize_common},
+	{"game/map01",          DLLInitialize_common},
+	{"game/map02",          DLLInitialize_common},
+	{"game/map03",          DLLInitialize_common},
+	{"game/map04",          DLLInitialize_common},
+	{"game/map05",          DLLInitialize_common},
+	{"game/map06",          DLLInitialize_common},
+	{"game/map07",          DLLInitialize_common},
+	{NULL, NULL}
+};
+
+void UnloadGame (void **game_library) {
+	*game_library = NULL;
+}
+
+dllfunctions *GetGameAPI (const char *tempname, hostfunctions *thost, void **game_library) {
+	int i;
+	for (i = 0; dll_table[i].name != NULL; ++i) {
+		if (strcmp(dll_table[i].name, tempname) == 0) {
+			*game_library = (void *)1;  // non-NULL sentinel
+			return dll_table[i].func(thost);
+		}
+	}
+	fprintf(stderr, "GetGameAPI: '%s' not found in static table\n", tempname);
+	return NULL;
+}
+
+#else
+
 void UnloadGame (void **game_library) {
 #ifdef WIN32
 	if (!FreeLibrary (*game_library))
@@ -100,4 +138,6 @@ dllfunctions *GetGameAPI (const char *tempname, hostfunctions *thost, void **gam
 
 	return getfuncs (thost);
 }
+
+#endif /* __EMSCRIPTEN__ */
 

@@ -6,12 +6,14 @@
 #include <windows.h>
 #endif
 
-#if defined(__APPLE__) && defined(__MACH__)
-#include <OpenGL/gl.h>  // Header File For The OpenGL32 Library
-#include <OpenGL/glu.h> // Header File For The GLu32 Library
+#ifdef __EMSCRIPTEN__
+#include <GL/gl.h>
+#elif defined(__APPLE__) && defined(__MACH__)
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 #else
-#include <GL/gl.h>      // Header File For The OpenGL32 Library
-#include <GL/glu.h>     // Header File For The GLu32 Library
+#include <GL/gl.h>
+#include <GL/glu.h>
 #endif
 
 #ifndef WIN32

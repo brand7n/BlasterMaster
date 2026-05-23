@@ -9,14 +9,34 @@
 
 // Statically defined class properties:
 class_properties_t	**class_properties;
-
+#ifdef __EMSCRIPTEN__
+static hostfunctions		*host_common = NULL;
+static dllfunctions		*game_common = NULL;
+#define host host_common
+#define game game_common
+#else
 hostfunctions		*host = NULL;
 dllfunctions		*game = NULL;
+#endif
+#ifdef __EMSCRIPTEN__
+static controlled_entity	*player = NULL;
+#else
 controlled_entity	*player = NULL;
+#endif
 sounds_t			sounds;
 
-void init() {
+static void common_init() {
 	int	i;
+
+#ifdef __EMSCRIPTEN__
+	// Load default foreground textures (normally done by per-map DLLs)
+	host->LoadTexture(0, "textures/fgtile000.png");
+	host->LoadTexture(1, "textures/fgtile001.png");
+	host->LoadTexture(2, "textures/fgtile002.png");
+	host->LoadTexture(3, "textures/fgtile003.png");
+	host->LoadTexture(4, "textures/fgtile1E2.png");
+#endif
+
 	if (host->devmode != 0) return;
 
 	// Precache our sounds:
@@ -61,7 +81,7 @@ void init() {
 	}
 }
 
-void pre_render() {
+static void common_pre_render() {
 	fixed		x, y, tx, ty, m;
 	fixed		xofs, yofs;
 
@@ -79,7 +99,7 @@ void pre_render() {
 	}
 }
 
-void post_render() {
+static void common_post_render() {
 	int i;
 	// Draw the HUD:
 
@@ -111,6 +131,8 @@ void post_render() {
 
 #ifdef WIN32
 __declspec(dllexport) dllfunctions *DLLInitialize(hostfunctions *thost) {
+#elif defined(__EMSCRIPTEN__)
+dllfunctions *DLLInitialize_common(hostfunctions *thost) {
 #else
 dllfunctions *DLLInitialize(hostfunctions *thost) {
 #endif
@@ -263,9 +285,9 @@ dllfunctions *DLLInitialize(hostfunctions *thost) {
 	DEFINE_CLASS(CLASS_RINGFLYER, ClassProperties_RingFlyer, 0)
 
 	game->numclasses = NUM_CLASSES;
-	game->init = init;
-	game->pre_render = pre_render;
-	game->post_render = post_render;
+	game->init = common_init;
+	game->pre_render = common_pre_render;
+	game->post_render = common_post_render;
 
 	return game;
 };

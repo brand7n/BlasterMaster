@@ -5,6 +5,10 @@
 #include "newmap.h"
 #include "bm_game.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 // Forward declarations
 int LoadGameDLL(const char *gamename);
 int LoadClientDLL(const char *gamename);
@@ -26,7 +30,7 @@ void				*game_library = NULL;
 void				*client_library = NULL;
 dllfunctions		*game, *client;
 hostfunctions		*host;
-int			sound_available;
+extern int		sound_available;
 
 fixed		screen_mx, screen_my;
 fixed		old_screen_mx, old_screen_my;
@@ -281,10 +285,41 @@ int LoadClientDLL(const char *gamename) {
 	return 0;
 }
 
+// Frame state (file scope for Emscripten callback)
+static unsigned char control_keys = 0, old_control_keys = 0;
+
+void gameloop_frame() {
+	sys_clearscreen();
+
+	// Read the keyboard:
+	old_control_keys = control_keys;
+	sys_eventloop(&control_keys);
+
+	// Toggle pausing:
+	if ((control_keys & BUT_PAUSE) && !(old_control_keys & BUT_PAUSE)) game_paused = !game_paused;
+
+	// Pass the control_keys on to the player entity:
+	if (player) player->control_keys = control_keys;
+
+	// Draw things before drawing entities:
+	if (game->pre_render) game->pre_render();
+
+	// Think for and draw each entity:
+	process_entities();
+
+	// Draw things after drawing entities:
+	if (game->post_render) game->post_render();
+
+	sys_updatescreen();
+
+#ifdef __EMSCRIPTEN__
+	if (quit) emscripten_cancel_main_loop();
+#endif
+}
+
 // Main game loop:
 void gameloop() {
 	int		i = 0;
-	unsigned char control_keys = 0, old_control_keys = 0;
 	const char	*gamename = "bmgame";
 	entity		e;
 
@@ -316,9 +351,11 @@ void gameloop() {
 	create_host();
 
 	// Load the client DLL:
+	fprintf(stderr, "Loading client DLL...\n");
 	if (LoadClientDLL(gamename) == -1) return;
 
 	// Call the client DLL's init function:
+	fprintf(stderr, "Calling client->init()...\n");
 	client->init();
 
 	if (game == NULL) {
@@ -334,38 +371,18 @@ void gameloop() {
 		return;
 	}
 
-	// Main game loop:
+	fprintf(stderr, "Map loaded, starting game loop...\n");
+
+#ifdef __EMSCRIPTEN__
+	// Let the browser drive the frame loop
+	emscripten_set_main_loop(gameloop_frame, 60, 1);
+#else
 	while (quit == 0) {
-		sys_clearscreen();
-
-		// Read the keyboard:
-		old_control_keys = control_keys;
-
-		// Call the system-specific function to fill the control_keys bitflags:
-		sys_eventloop(&control_keys);
-
-		// Toggle pausing:
-		if ((control_keys & BUT_PAUSE) && !(old_control_keys & BUT_PAUSE)) game_paused = !game_paused;
-
-		// Pass the control_keys on to the player entity:
-		if (player) player->control_keys = control_keys;
-
-		// Draw things before drawing entities:
-		if (game->pre_render) game->pre_render();
-
-		// Think for and draw each entity:
-		process_entities();
-
-		// Draw things after drawing entities:
-		if (game->post_render) game->post_render();
-
-		sys_updatescreen();
+		gameloop_frame();
 	}
+#endif
 
 	if ( sound_available) {
-/*		if ( music != NULL )
-			Mix_FreeMusic(music);
-*/
 		sndClose();
 	}
 

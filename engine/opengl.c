@@ -239,7 +239,7 @@ void InitGL(int Width, int Height) {
 	glViewport(0, 0, Width, Height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0, Width, Height, 0);
+	glOrtho(0, Width, Height, 0, -1, 1);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);			  // Black Background
 	glMatrixMode(GL_MODELVIEW);
@@ -344,14 +344,13 @@ void sys_togglefullscreen() {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0, (int)screen_w, (int)screen_h, 0);
+	glOrtho(0, (int)screen_w, (int)screen_h, 0, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	SDL_RaiseWindow(sdlwindow);
 };
 
 void sys_clearscreen() {
-	// Clear the screen:
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void sys_updatescreen() {
@@ -359,8 +358,10 @@ void sys_updatescreen() {
 	static clock_t	lastclock = 0;
 	clock_t	curclock;
 
+#ifndef __EMSCRIPTEN__
 	// About 60 fps:	(60fps = 16.667 ms/frame)
 	while (SDL_GetTicks() - curticks <= 16);
+#endif
 	curticks = SDL_GetTicks();
 
 	time_dt = 1;

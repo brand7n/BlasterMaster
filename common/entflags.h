@@ -80,7 +80,11 @@ typedef struct {
 	preview_func	preview;
 } mapclass_properties_t;
 
+#ifdef __EMSCRIPTEN__
+extern class_properties_t	**class_properties;
+#else
 class_properties_t	**class_properties;
+#endif
 
 #endif
 
